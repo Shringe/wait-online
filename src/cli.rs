@@ -15,8 +15,4 @@ pub struct Args {
     /// Delay in milliseconds between retry attempts
     #[arg(short, long, default_value_t = 100)]
     pub delay: u64,
-
-    /// Duration in milliseconds before the endpoint is timed out
-    #[arg(short, long, default_value_t = 400)]
-    pub timeout: u64,
 }

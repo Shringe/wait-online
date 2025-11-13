@@ -4,9 +4,8 @@ use clap::Parser;
 use cli::Args;
 use std::process::exit;
 use std::thread::sleep;
-use std::time;
+use std::time::Duration;
 use trust_dns_resolver::Resolver;
-use trust_dns_resolver::config::{ResolverConfig, ResolverOpts};
 
 /// Uses println!() in debug mode. Optimizies completely out of release builds
 macro_rules! debug {
@@ -20,9 +19,8 @@ fn main() {
     let args = Args::parse();
     debug!("{:#?}", args);
 
-    let resolver = Resolver::new(ResolverConfig::default(), ResolverOpts::default())
-        .expect("Failed to create resolver");
-    let delay = time::Duration::from_millis(args.delay);
+    let delay = Duration::from_millis(args.delay);
+    let resolver = Resolver::from_system_conf().expect("Failed to create resolver");
 
     println!("Waiting to connect to endpoint: {}", args.endpoint);
     for attempt in 1..=args.max_retries {
