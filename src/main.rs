@@ -15,20 +15,41 @@ macro_rules! debug {
     }};
 }
 
+/// Uses eprintln!() in debug mode. Optimizies completely out of release builds
+macro_rules! edebug {
+    ($($arg:tt)*) => {{
+        #[cfg(debug_assertions)]
+        eprintln!($($arg)*);
+    }};
+}
+
 fn main() {
     let args = Args::parse();
-    debug!("{:#?}", args);
+    debug!("Args: {:#?}", args);
 
     let delay = Duration::from_millis(args.delay);
-    let resolver = Resolver::from_system_conf().expect("Failed to create resolver");
 
     println!("Waiting to connect to endpoint: {}", args.endpoint);
     for attempt in 1..=args.max_retries {
         debug!("Attempt {}/{}", attempt, args.max_retries);
 
-        if resolver.lookup_ip(&args.endpoint).is_ok() {
-            println!("Successfully reached enpoint");
-            exit(0);
+        let resolver = match Resolver::from_system_conf() {
+            Ok(resolver) => resolver,
+            Err(e) => {
+                edebug!("Failed to create resolver: {}", e);
+                continue;
+            }
+        };
+
+        match resolver.lookup_ip(&args.endpoint) {
+            Ok(lookup) => {
+                debug!("Lookup result: {:#?}", lookup);
+                println!("Successfully reached enpoint");
+                exit(0);
+            }
+            Err(e) => {
+                edebug!("Failed to reach endpoint: {}", e);
+            }
         }
 
         if attempt < args.max_retries {
